@@ -8,13 +8,27 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-double value = 0;
-bool isPlaying = false;
-final AudioPlayer audioPlayer = AudioPlayer();
-Duration duration = Duration.zero;
-Duration postion = Duration.zero;
-
 class _HomeScreenState extends State<HomeScreen> {
+  double value = 0;
+  bool isPlaying = false;
+  final AudioPlayer audioPlayer = AudioPlayer();
+  Duration duration = Duration.zero;
+  Duration postion = Duration.zero;
+  @override
+  void initState() {
+    super.initState();
+
+    audioPlayer.onDurationChanged.listen((Duration dur) {
+      duration = dur;
+      setState(() {});
+    });
+
+    audioPlayer.onPositionChanged.listen((Duration pos) {
+      postion = pos;
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,10 +129,17 @@ class _HomeScreenState extends State<HomeScreen> {
               Slider(
                 padding: EdgeInsets.all(8.0),
                 min: 0,
-                max: 10,
-                value: value,
+                max: duration.inSeconds.toDouble() > 0
+                    ? duration.inSeconds.toDouble()
+                    : 1,
+                value: postion.inSeconds.toDouble().clamp(
+                  0,
+                  duration.inSeconds.toDouble() > 0
+                      ? duration.inSeconds.toDouble()
+                      : 1,
+                ),
                 onChanged: (val) {
-                  value = val;
+                  audioPlayer.seek(Duration(seconds: val.toInt()));
                   setState(() {});
                 },
               ),
@@ -127,8 +148,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('00:00', style: TextStyle(color: Colors.white)),
-                    Text('00:00', style: TextStyle(color: Colors.white)),
+                    Text(
+                      '${postion.inMinutes}:${postion.inSeconds}',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      '${duration.inMinutes}:${duration.inSeconds}',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
